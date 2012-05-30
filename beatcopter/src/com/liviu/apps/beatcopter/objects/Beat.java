@@ -8,7 +8,8 @@ import com.liviu.apps.beatcopter.utils.Utils;
 
 @DbTable
 public class Beat {
-	// Constants
+	
+	// Constants 
 	private final String TAG = "Beat";
 	
 	// Data				
@@ -33,10 +34,14 @@ public class Beat {
 	@DbField
 	private long mUserId;
 	
+	@DbField
+	private ContentItem mImage;
+		
 	public Beat(){
 		mLocalId = 1;
 		mRemoteId = 33;
-		mTitle = "Beat " + Utils.now();		
+		mTitle = "Beat " + Utils.now();
+		mImage = new ContentItem();
 	}
 	
 	@Override

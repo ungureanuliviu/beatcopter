@@ -193,7 +193,7 @@ public class DbManager {
 		return sql;
 	}
 	
-	public long put(Object pItem){
+	public long put(Object pItem, long pParentId){
 		if(null == pItem){
 			return DBConstants.INVALID_ID;
 		}
@@ -201,6 +201,7 @@ public class DbManager {
 		Console.debug(TAG, "Add a new " + pItem.getClass().getName(), Console.Liviu);
 		String tableName = computeTableName(pItem.getClass().getName());
 		ContentValues values = new ContentValues();
+		ArrayList<Object> otherObjectsToStore = new ArrayList<Object>();
 		
 		// now the fields
 		Field[] fields = pItem.getClass().getDeclaredFields();
@@ -224,6 +225,8 @@ public class DbManager {
 							values.put(f.getName(), f.getDouble(pItem));
 						else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
 							values.put(f.getName(), f.getBoolean(pItem));
+						else
+							otherObjectsToStore.add(f.get(pItem));						
 					} catch (IllegalArgumentException e) {
 						e.printStackTrace();
 					} catch (IllegalAccessException e) {
@@ -232,14 +235,23 @@ public class DbManager {
 				}
 			}else{
 				Console.debug(TAG, "the field " + f.getName() + " is not an entry in database", Console.Liviu);
-			}			
+			}
+			
+			if(DBConstants.INVALID_ID != pParentId){
+				values.put("mParentId", pParentId);
+			}
 		}	
 		
 		if(values.size() != 0){
-			Console.debug(TAG, "values size: " + values.size(), Console.Liviu);
+			Console.debug(TAG, "values size for " + pItem + " " + values.size(), Console.Liviu);
 			openOrCreateDatabase();
 			try{
 				long pNewId = mDb.insertOrThrow(tableName, null, values);
+				if(-1 != pNewId){
+					for (Object obj: otherObjectsToStore) {						
+						put(obj, pNewId);
+					}
+				}
 				return pNewId;
 			}catch (SQLException e) {
 				e.printStackTrace();

@@ -7,4 +7,5 @@ public class Constants {
 	public static final String PREFS_NAME = APP_NAME.toLowerCase() + "_prefs";
 	public static final String ACCOUNT_TYPE_GOOGLE = "com.google";
 	public static final String KEY_CURRENT_ACCOUNT = "key_current_account";
+	public static final long INVALID_ID = -1;
 }	
