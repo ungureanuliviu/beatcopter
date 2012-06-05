@@ -86,4 +86,15 @@ public class Utils {
 	    Date d = new Date();	    
 	    return d.getTime();	        
 	}			
+	
+	public static <T> T[] concat(T[] A, T[] B, T[] C) {
+		   if(C.length != (A.length + B.length)){
+			   return C;
+		   }
+		   
+		   System.arraycopy(A, 0, C, 0, A.length);
+		   System.arraycopy(B, 0, C, A.length, B.length);
+
+		   return C;
+		}
 }

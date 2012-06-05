@@ -1,23 +1,19 @@
 package com.liviu.apps.beatcopter.objects;
 
 import com.liviu.apps.beatcopter.db.DBConstants;
+import com.liviu.apps.beatcopter.db.DBModel;
 import com.liviu.apps.beatcopter.db.annotations.DbField;
 import com.liviu.apps.beatcopter.db.annotations.DbTable;
-import com.liviu.apps.beatcopter.interfaces.IDb;
 import com.liviu.apps.beatcopter.utils.Convertor;
 import com.liviu.apps.beatcopter.utils.Utils;
 
 @DbTable
-public class 
-Beat implements IDb{
+public class Beat extends DBModel{
 	
 	// Constants 
 	private final String TAG = "Beat";
 	
-	// Data				
-	@DbField(autoincrement=true, primaryKey = true)
-	private long mLocalId;
-	
+	// Data						
 	@DbField(defaultValue = "-1")	
 	private long mRemoteId;			
 	
@@ -31,9 +27,6 @@ Beat implements IDb{
 	private long mCreateDate;
 	
 	@DbField
-	private long mParentId;
-	
-	@DbField
 	private long mUserId;
 	
 	@DbField(canBeNull=true, defaultValue="null")
@@ -42,8 +35,8 @@ Beat implements IDb{
 	@DbField(canBeNull=true, defaultValue="null")
 	private Test mTest;
 		
-	public Beat(){
-		mLocalId = 1;
+	public Beat(){		
+		super();
 		mRemoteId = 33;
 		mTitle = "Beat " + Utils.now();
 		mImage = new ContentItem();
@@ -53,12 +46,7 @@ Beat implements IDb{
 	
 	@Override
 	public String toString() {	
-		return "\n================================= BEAT ==================================\n " + Convertor.toString(this) + "\nImage: " +  mImage + "\nTest: " + mTest;
-	}
-
-	@Override
-	public long getLocalId() {
-		return mLocalId;
+		return "\n================================= BEAT ==================================\n " + Convertor.toString(this) + "\nImage: " +  mImage + "\nTest: " + mTest + "\n super " + super.toString();
 	}
 
 	public ContentItem getContent() {

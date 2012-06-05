@@ -113,7 +113,11 @@ public class DbManager {
 		}
 		
 		// now the fields
-		Field[] fields = pClazz.getDeclaredFields();
+		Field[] baseFields = pClazz.getDeclaredFields();
+		Field[] superFields = pClazz.getSuperclass().getDeclaredFields();
+		Field[] fields = new Field[baseFields.length + superFields.length];
+		System.arraycopy(baseFields, 0, fields, 0, baseFields.length);
+		System.arraycopy(superFields, 0, fields, baseFields.length, superFields.length);
 		
 		for(int i = 0; i < fields.length; i++){
 			String tempSql = getFieldSql(fields[i]);
@@ -207,7 +211,12 @@ public class DbManager {
 		ArrayList<Object> otherObjectsToStore = new ArrayList<Object>();
 		
 		// now the fields
-		Field[] fields = pItem.getClass().getDeclaredFields();
+		Field[] baseFields = pItem.getClass().getDeclaredFields();
+		Field[] superFields = pItem.getClass().getSuperclass().getDeclaredFields();
+		Field[] fields = new Field[baseFields.length + superFields.length];
+		System.arraycopy(baseFields, 0, fields, 0, baseFields.length);
+		System.arraycopy(superFields, 0, fields, baseFields.length, superFields.length);
+		
 		Field f;
 		
 		for(int i = 0; i < fields.length; i++){			
@@ -297,7 +306,12 @@ public class DbManager {
 	private String[] getObjectProjection(Class pClazz){		
 		ArrayList<String> prj = new ArrayList<String>();
 		
-		Field[] fields = pClazz.getDeclaredFields();
+		Field[] baseFields = pClazz.getDeclaredFields();
+		Field[] superFields = pClazz.getSuperclass().getDeclaredFields();
+		Field[] fields = new Field[baseFields.length + superFields.length];
+		System.arraycopy(baseFields, 0, fields, 0, baseFields.length);
+		System.arraycopy(superFields, 0, fields, baseFields.length, superFields.length);
+		
 		int modifier;
 		for(int i = 0; i < fields.length; i++){
 			modifier = fields[i].getModifiers();
@@ -356,8 +370,15 @@ public class DbManager {
 			for(int i = 0; i < numRows; i++){
 				tempObj = (T)constructor.newInstance();
 				for(int prjIndex = 0; prjIndex < localProjection.length; prjIndex++){
-					Field f = objectsKind.getDeclaredField(localProjection[prjIndex]);
-					f.setAccessible(true);
+					Field f = null;
+					try{
+						f = objectsKind.getDeclaredField(localProjection[prjIndex]);
+						f.setAccessible(true);
+					} catch (NoSuchFieldException e) {
+						// e.printStackTrace();
+						f = objectsKind.getSuperclass().getDeclaredField(localProjection[prjIndex]);
+						f.setAccessible(true);						
+					}
 					if(f.getType().equals(String.class))				
 						f.set(tempObj, c.getString(prjIndex));
 					else if(f.getType().equals(int.class) || f.getType().equals(Integer.class))
@@ -370,8 +391,8 @@ public class DbManager {
 						f.setBoolean(tempObj, c.getInt(prjIndex) == 1 ? Boolean.TRUE : Boolean.FALSE);					
 					else{
 						Console.error(TAG, "get child object: ", Console.Liviu);
-						Console.error(TAG, "get child object: " + ((IDb)tempObj).getLocalId(), Console.Liviu);
-						f.set(tempObj, queryFirst(f.getType(), new String[]{"*"}, "mParentId=" + ((IDb)tempObj).getLocalId(), null, null, null, false));
+						Console.error(TAG, "get child object: " + ((DBModel)tempObj).getId(), Console.Liviu);
+						f.set(tempObj, queryFirst(f.getType(), new String[]{"*"}, "mParentId=" + ((DBModel)tempObj).getId(), null, null, null, false));
 					}
 				}
 				

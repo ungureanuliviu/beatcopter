@@ -2,13 +2,14 @@ package com.liviu.apps.beatcopter.objects;
 
 
 import com.liviu.apps.beatcopter.common.Constants;
+import com.liviu.apps.beatcopter.db.DBModel;
 import com.liviu.apps.beatcopter.db.annotations.DbField;
 import com.liviu.apps.beatcopter.db.annotations.DbTable;
 import com.liviu.apps.beatcopter.utils.Convertor;
 import com.liviu.apps.beatcopter.utils.Utils;
 
 @DbTable
-public class ContentItem {
+public class ContentItem extends DBModel{
 
 	// Constants
 	private final String TAG = "ContentItem";
@@ -19,15 +20,9 @@ public class ContentItem {
 	private final String TYPE_UNKNOWN = "unknown";
 	
 	
-	// Data
-	@DbField(autoincrement=true, canBeNull=false, primaryKey=true)
-	private long mLocalId;
-	
+	// Data	
 	@DbField(defaultValue="-1", canBeNull=false)
 	private long mRemoteId;
-	
-	@DbField(defaultValue="-1", canBeNull=false)
-	private long mParentId;
 	
 	@DbField(defaultValue=TYPE_UNKNOWN, canBeNull=false)
 	private String mType; 
@@ -40,21 +35,11 @@ public class ContentItem {
 	private ContentItem itm;
 	
 	public ContentItem() {
-		long now = Utils.now();
-		mLocalId = Constants.INVALID_ID;
-		mRemoteId = Constants.INVALID_ID;
-		mParentId = Constants.INVALID_ID;
+		super();
+		long now = Utils.now();		
+		mRemoteId = Constants.INVALID_ID;		
 		mType = TYPE_UNKNOWN;		
 		mPath = "fake path_" + now;
-	}
-	
-	public long getLocalId(){
-		return mLocalId;
-	}
-	
-	public ContentItem setLocalId(long pLocalId){
-		mLocalId = pLocalId;
-		return this;
 	}
 	
 	public long getRemoteId(){
