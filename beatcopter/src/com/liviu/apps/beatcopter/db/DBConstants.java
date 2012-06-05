@@ -11,5 +11,6 @@ public class DBConstants {
 	public static final boolean DEFAULT_FIELD_PRIMARY_KEY = false;
 	public static final long INVALID_ID = -1;
 	public static final String DEFAULT_NOW = "now";
+	public static final String NONE = "none";	
 
 }

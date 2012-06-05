@@ -26,7 +26,7 @@ public class HomeActivity extends Activity {
         
         Beat beat = new Beat();
         Console.debug(TAG, "newId: " + dbMan.put(beat, -1), Console.Liviu);
-        ArrayList<Beat> beats = (ArrayList<Beat>) dbMan.query(Beat.class, new String[]{"mTitle"}, null, null, null, null);        
+        ArrayList<Beat> beats = (ArrayList<Beat>) dbMan.query(Beat.class, new String[]{"*"}, null, null, null, null);        
         Console.debug(TAG, "results: " + beats , Console.Liviu);        
     }
 }

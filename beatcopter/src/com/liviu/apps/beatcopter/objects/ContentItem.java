@@ -5,6 +5,7 @@ import com.liviu.apps.beatcopter.common.Constants;
 import com.liviu.apps.beatcopter.db.annotations.DbField;
 import com.liviu.apps.beatcopter.db.annotations.DbTable;
 import com.liviu.apps.beatcopter.utils.Convertor;
+import com.liviu.apps.beatcopter.utils.Utils;
 
 @DbTable
 public class ContentItem {
@@ -35,12 +36,16 @@ public class ContentItem {
 	@DbField(canBeNull=false)
 	private String mPath;	
 	
+	@DbField(canBeNull=true, defaultValue="null")
+	private ContentItem itm;
+	
 	public ContentItem() {
+		long now = Utils.now();
 		mLocalId = Constants.INVALID_ID;
 		mRemoteId = Constants.INVALID_ID;
 		mParentId = Constants.INVALID_ID;
 		mType = TYPE_UNKNOWN;		
-		mPath = "fake path";
+		mPath = "fake path_" + now;
 	}
 	
 	public long getLocalId(){

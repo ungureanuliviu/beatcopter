@@ -14,5 +14,5 @@ public @interface DbField {
 	public boolean unique() default DBConstants.DEFAULT_FIELD_UNICITY;
 	public boolean autoincrement() default DBConstants.DEFAULT_FIELD_AUTOINCREMENT; // we have to check if it is a supportable type
 	public boolean canBeNull() default DBConstants.DEFAULT_FIELD_CAN_BE_NULL;
-	public boolean primaryKey() default DBConstants.DEFAULT_FIELD_PRIMARY_KEY;
+	public boolean primaryKey() default DBConstants.DEFAULT_FIELD_PRIMARY_KEY;	
 }

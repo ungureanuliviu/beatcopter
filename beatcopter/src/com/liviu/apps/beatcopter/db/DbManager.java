@@ -17,6 +17,7 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.liviu.apps.beatcopter.db.annotations.DbField;
 import com.liviu.apps.beatcopter.db.annotations.DbTable;
+import com.liviu.apps.beatcopter.interfaces.IDb;
 import com.liviu.apps.beatcopter.utils.Console;
 import com.liviu.apps.beatcopter.utils.Utils;
 
@@ -149,7 +150,9 @@ public class DbManager {
 				else if(pField.getType().equals(Double.class) || pField.getType().equals(double.class))
 					sql = pField.getName() + " double";
 				else if(pField.getType().equals(Boolean.class) || pField.getType().equals(boolean.class))
-					sql = pField.getName() + " integer"; // this should boolean: TODO look at this problem when you read from DB		
+					sql = pField.getName() + " integer"; // this should boolean: TODO look at this problem when you read from DB
+				else
+					sql = pField.getName() + " text";
 			}
 			catch (IllegalArgumentException e) {
 				e.printStackTrace();
@@ -225,8 +228,9 @@ public class DbManager {
 							values.put(f.getName(), f.getDouble(pItem));
 						else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
 							values.put(f.getName(), f.getBoolean(pItem));
-						else
-							otherObjectsToStore.add(f.get(pItem));						
+						else{							
+							otherObjectsToStore.add(f.get(pItem));
+						}
 					} catch (IllegalArgumentException e) {
 						e.printStackTrace();
 					} catch (IllegalAccessException e) {
@@ -248,15 +252,18 @@ public class DbManager {
 			try{
 				long pNewId = mDb.insertOrThrow(tableName, null, values);
 				if(-1 != pNewId){
+					closeDatabase();
 					for (Object obj: otherObjectsToStore) {						
 						put(obj, pNewId);
 					}
+				}else{
+					closeDatabase();
 				}
 				return pNewId;
 			}catch (SQLException e) {
 				e.printStackTrace();
-			}
-			closeDatabase();
+				closeDatabase();
+			}			
 		}else{
 			Console.debug(TAG, "db:add-> No value was added in ContentValues", Console.Liviu);
 		}
@@ -287,14 +294,43 @@ public class DbManager {
 		}
 	}
 	
+	private String[] getObjectProjection(Class pClazz){		
+		ArrayList<String> prj = new ArrayList<String>();
+		
+		Field[] fields = pClazz.getDeclaredFields();
+		int modifier;
+		for(int i = 0; i < fields.length; i++){
+			modifier = fields[i].getModifiers();
+			if(!Modifier.isFinal(modifier)){
+				Console.debug(TAG, "added to projection: " + fields[i].getName(), Console.Liviu);
+				if("mLocalId".equals(fields[i].getName())){
+					prj.add(0, fields[i].getName());	
+				}else{
+					prj.add(fields[i].getName());
+				}
+			}
+		}		
+		String[] projections = new String[prj.size()];
+		projections = prj.toArray(projections);
+		return projections;
+	}
+	
 	public synchronized <T> Object query(T objectsKindClass, String[] projection, String selection, String groupBy, String having, String orderBy){
 		ArrayList<T> resultsList = new ArrayList<T>();
 		Class objectsKind = (Class)objectsKindClass;
+		String[] localProjection = projection;
+		if(projection.length == 1){
+			if(projection[0].equals("*")){
+				localProjection = getObjectProjection(objectsKind);
+			}
+		}
+		
+		Console.debug(TAG, "projection for " + objectsKind + " is: " + localProjection, Console.Liviu);
 		
 		openOrCreateDatabase();
 		Cursor c = null;
 		try{
-			c = mDb.query(computeTableName(objectsKind.getName()), projection, selection, null, groupBy, having, orderBy);
+			c = mDb.query(computeTableName(objectsKind.getName()), localProjection, selection, null, groupBy, having, orderBy);
 		}catch (SQLException e) {
 			e.printStackTrace();
 			return null;
@@ -319,8 +355,8 @@ public class DbManager {
 						
 			for(int i = 0; i < numRows; i++){
 				tempObj = (T)constructor.newInstance();
-				for(int prjIndex = 0; prjIndex < projection.length; prjIndex++){
-					Field f = objectsKind.getDeclaredField(projection[prjIndex]);
+				for(int prjIndex = 0; prjIndex < localProjection.length; prjIndex++){
+					Field f = objectsKind.getDeclaredField(localProjection[prjIndex]);
 					f.setAccessible(true);
 					if(f.getType().equals(String.class))				
 						f.set(tempObj, c.getString(prjIndex));
@@ -331,7 +367,12 @@ public class DbManager {
 					else if(f.getType().equals(Double.class) || f.getType().equals(double.class))
 						f.setDouble(tempObj, c.getDouble(prjIndex));
 					else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
-						f.setBoolean(tempObj, c.getInt(prjIndex) == 1 ? Boolean.TRUE : Boolean.FALSE);
+						f.setBoolean(tempObj, c.getInt(prjIndex) == 1 ? Boolean.TRUE : Boolean.FALSE);					
+					else{
+						Console.error(TAG, "get child object: ", Console.Liviu);
+						Console.error(TAG, "get child object: " + ((IDb)tempObj).getLocalId(), Console.Liviu);
+						f.set(tempObj, queryFirst(f.getType(), new String[]{"*"}, "mParentId=" + ((IDb)tempObj).getLocalId(), null, null, null, false));
+					}
 				}
 				
 				resultsList.add(tempObj);
@@ -358,6 +399,88 @@ public class DbManager {
 		
 		return resultsList;
 	}
+	
+	public synchronized <T> Object queryFirst(T objectsKindClass, String[] projection, String selection, String groupBy, String having, String orderBy, boolean pShouldOpenDatabase){
+		T result = null;
+		Class objectsKind = (Class)objectsKindClass;
+		String[] localProjection = projection;
+		if(projection.length == 1){
+			if(projection[0].equals("*")){
+				localProjection = getObjectProjection(objectsKind);
+			}
+		}		
+		
+		if(pShouldOpenDatabase){
+			openOrCreateDatabase();
+		}
+		
+		Cursor c = null;
+		try{
+			c = mDb.query(computeTableName(objectsKind.getName()), localProjection, selection, null, groupBy, having, orderBy);
+		}catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+		
+		if(null == c){
+			if(pShouldOpenDatabase){
+				closeDatabase();
+			}
+			return result;
+		}
+		
+		if(c.getCount() == 0){
+			c.close();
+			if(pShouldOpenDatabase){
+				closeDatabase();
+			}
+			return result;
+		}
+						
+		c.moveToFirst();
+		try {
+			Constructor constructor = objectsKind.getConstructor();
+			T tempObj = null;							
+			tempObj = (T)constructor.newInstance();
+			for(int prjIndex = 0; prjIndex < localProjection.length; prjIndex++){
+				Field f = objectsKind.getDeclaredField(localProjection[prjIndex]);
+				f.setAccessible(true);
+				if(f.getType().equals(String.class))				
+					f.set(tempObj, c.getString(prjIndex));
+				else if(f.getType().equals(int.class) || f.getType().equals(Integer.class))
+					f.setInt(tempObj, c.getInt(prjIndex));
+				else if(f.getType().equals(long.class) || f.getType().equals(Long.class))
+					f.setLong(tempObj, c.getLong(prjIndex));
+				else if(f.getType().equals(Double.class) || f.getType().equals(double.class))
+					f.setDouble(tempObj, c.getDouble(prjIndex));
+				else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
+					f.setBoolean(tempObj, c.getInt(prjIndex) == 1 ? Boolean.TRUE : Boolean.FALSE);																					
+			}
+			result = tempObj;
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (InstantiationException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		}
+		
+		c.close();
+		if(pShouldOpenDatabase){
+			closeDatabase();
+		}
+		
+		Console.error(TAG, "child object: " + result, Console.Liviu);
+		return result;
+	}	
 	
 	/**
 	 * close the database (just if it is open)

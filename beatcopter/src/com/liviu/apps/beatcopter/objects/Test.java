@@ -11,6 +11,9 @@ public class Test {
 	@DbField(unique=true)
 	private String mTestField;
 	
+	@DbField
+	private long mParentId;
+	
 	public Test() {
 		mTestField = "test " + Utils.now();
 	}
