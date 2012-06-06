@@ -1,5 +1,7 @@
 package com.liviu.apps.beatcopter.objects;
 
+import java.util.ArrayList;
+
 import com.liviu.apps.beatcopter.db.DBConstants;
 import com.liviu.apps.beatcopter.db.DBModel;
 import com.liviu.apps.beatcopter.db.annotations.DbField;
@@ -34,7 +36,10 @@ public class Beat extends DBModel{
 	
 	@DbField(canBeNull=true, defaultValue="null")
 	private Test mTest;
-		
+	
+	@DbField(canBeNull=true, defaultValue="null")
+	private ArrayList<ContentItem> mItems;
+	
 	public Beat(){		
 		super();
 		mRemoteId = 33;

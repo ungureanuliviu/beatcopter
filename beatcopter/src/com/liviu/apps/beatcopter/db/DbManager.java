@@ -5,6 +5,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import android.R.array;
@@ -201,6 +203,8 @@ public class DbManager {
 	}
 	
 	public long put(Object pItem, long pParentId){
+		Console.debug(TAG, "put()", Console.Liviu);
+		
 		if(null == pItem){
 			return DBConstants.INVALID_ID;
 		}
@@ -237,9 +241,18 @@ public class DbManager {
 							values.put(f.getName(), f.getDouble(pItem));
 						else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
 							values.put(f.getName(), f.getBoolean(pItem));
-						else{							
-							otherObjectsToStore.add(f.get(pItem));
-						}
+						else{
+							Type type = f.getGenericType();
+							if(type instanceof ParameterizedType){
+								ParameterizedType pt = (ParameterizedType) type;  
+					            System.out.println("raw type: " + pt.getRawType());					             
+					            if(pt.getRawType().equals(java.util.ArrayList.class)){
+					            	Console.debug(TAG, "We have an arraylist", Console.Liviu);					            
+					            }
+					        }else{
+					        	otherObjectsToStore.add(f.get(pItem));		
+							}
+						}						
 					} catch (IllegalArgumentException e) {
 						e.printStackTrace();
 					} catch (IllegalAccessException e) {
@@ -264,6 +277,23 @@ public class DbManager {
 					for (Object obj: otherObjectsToStore) {
 						Console.debug(TAG, "put subitem: " + obj + " with parentId: " + pNewId, Console.Liviu);
 						put(obj, pNewId);
+						
+						/*
+						 * Type type = f.getGenericType();
+							if(type instanceof ParameterizedType){
+								ParameterizedType pt = (ParameterizedType) type;  
+					            System.out.println("raw type: " + pt.getRawType());					             
+					            if(pt.getRawType().equals(java.util.ArrayList.class)){
+					            	Console.debug(TAG, "We have an arraylist", Console.Liviu);					            
+					            	for (Type t : pt.getActualTypeArguments()) {  						               						                 
+					            		ArrayList<?>list = (ArrayList<?>)f.get(pItem);						                	 						                	 
+					            			for(int listIndex = 0; listIndex < list.size(); listIndex++){
+					            				put(list.get(i), ((DBModel)pItem).getId());
+						                	}							                	 
+					                	}						                	 							                								                 
+						          	}			            	 
+					        }
+						 */
 					}
 				}else{
 					closeDatabase();
