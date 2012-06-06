@@ -9,7 +9,7 @@ import com.liviu.apps.beatcopter.utils.Utils;
 @DbTable
 public class Test extends DBModel{
 
-	@DbField(unique=true)
+	@DbField(unique=false)
 	private String mTestField;
 	
 	public Test() {

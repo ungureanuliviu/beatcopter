@@ -32,7 +32,7 @@ public class ContentItem extends DBModel{
 	private String mPath;	
 	
 	@DbField(canBeNull=true, defaultValue="null")
-	private ContentItem itm;
+	private Test mTest;
 	
 	public ContentItem() {
 		super();
@@ -40,6 +40,7 @@ public class ContentItem extends DBModel{
 		mRemoteId = Constants.INVALID_ID;		
 		mType = TYPE_UNKNOWN;		
 		mPath = "fake path_" + now;
+		mTest = new Test();
 	}
 	
 	public long getRemoteId(){

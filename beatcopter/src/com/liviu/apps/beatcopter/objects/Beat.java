@@ -46,7 +46,7 @@ public class Beat extends DBModel{
 	
 	@Override
 	public String toString() {	
-		return "\n================================= BEAT ==================================\n " + Convertor.toString(this) + "\nImage: " +  mImage + "\nTest: " + mTest + "\n super " + super.toString();
+		return  Convertor.toString(this);
 	}
 
 	public ContentItem getContent() {

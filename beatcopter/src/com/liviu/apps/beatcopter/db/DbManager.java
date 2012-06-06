@@ -255,14 +255,14 @@ public class DbManager {
 			}
 		}	
 		
-		if(values.size() != 0){
-			Console.debug(TAG, "values size for " + pItem + " " + values.size(), Console.Liviu);
+		if(values.size() != 0){			
 			openOrCreateDatabase();
 			try{
 				long pNewId = mDb.insertOrThrow(tableName, null, values);
 				if(-1 != pNewId){
 					closeDatabase();
-					for (Object obj: otherObjectsToStore) {						
+					for (Object obj: otherObjectsToStore) {
+						Console.debug(TAG, "put subitem: " + obj + " with parentId: " + pNewId, Console.Liviu);
 						put(obj, pNewId);
 					}
 				}else{
@@ -309,8 +309,9 @@ public class DbManager {
 		Field[] baseFields = pClazz.getDeclaredFields();
 		Field[] superFields = pClazz.getSuperclass().getDeclaredFields();
 		Field[] fields = new Field[baseFields.length + superFields.length];
-		System.arraycopy(baseFields, 0, fields, 0, baseFields.length);
-		System.arraycopy(superFields, 0, fields, baseFields.length, superFields.length);
+		
+		System.arraycopy(superFields, 0, fields, 0, superFields.length);
+		System.arraycopy(baseFields, 0, fields, superFields.length, baseFields.length);	
 		
 		int modifier;
 		for(int i = 0; i < fields.length; i++){
@@ -337,9 +338,7 @@ public class DbManager {
 			if(projection[0].equals("*")){
 				localProjection = getObjectProjection(objectsKind);
 			}
-		}
-		
-		Console.debug(TAG, "projection for " + objectsKind + " is: " + localProjection, Console.Liviu);
+		}				
 		
 		openOrCreateDatabase();
 		Cursor c = null;
@@ -378,8 +377,13 @@ public class DbManager {
 						// e.printStackTrace();
 						f = objectsKind.getSuperclass().getDeclaredField(localProjection[prjIndex]);
 						f.setAccessible(true);						
-					}
-					if(f.getType().equals(String.class))				
+					}				
+					
+					if(f.getName().equals("mId")){
+						((DBModel)tempObj).setId(c.getLong(prjIndex));
+					}else if(f.getName().equals("mParentId")){
+						((DBModel)tempObj).setParentId(c.getLong(prjIndex));
+					}else if(f.getType().equals(String.class))				
 						f.set(tempObj, c.getString(prjIndex));
 					else if(f.getType().equals(int.class) || f.getType().equals(Integer.class))
 						f.setInt(tempObj, c.getInt(prjIndex));
@@ -396,6 +400,7 @@ public class DbManager {
 					}
 				}
 				
+				Console.error(TAG, "get child object final: " + ((DBModel)tempObj).getId(), Console.Liviu);
 				resultsList.add(tempObj);
 				c.moveToNext();
 			}
@@ -464,9 +469,19 @@ public class DbManager {
 			T tempObj = null;							
 			tempObj = (T)constructor.newInstance();
 			for(int prjIndex = 0; prjIndex < localProjection.length; prjIndex++){
-				Field f = objectsKind.getDeclaredField(localProjection[prjIndex]);
-				f.setAccessible(true);
-				if(f.getType().equals(String.class))				
+				Field f = null;
+				try{
+					f = objectsKind.getDeclaredField(localProjection[prjIndex]);
+					f.setAccessible(true);
+				}catch (NoSuchFieldException e) {					
+					f = objectsKind.getSuperclass().getDeclaredField(localProjection[prjIndex]);
+					f.setAccessible(true);
+				}
+				if(f.getName().equals("mId")){
+					((DBModel)tempObj).setId(c.getLong(prjIndex));
+				}else if(f.getName().equals("mParentId")){
+					((DBModel)tempObj).setParentId(c.getLong(prjIndex));
+				}else if(f.getType().equals(String.class))				
 					f.set(tempObj, c.getString(prjIndex));
 				else if(f.getType().equals(int.class) || f.getType().equals(Integer.class))
 					f.setInt(tempObj, c.getInt(prjIndex));

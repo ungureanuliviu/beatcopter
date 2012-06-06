@@ -37,7 +37,7 @@ public class DBModel {
 	
 	@Override
 	public String toString() {
-		return Convertor.toString(this);
+		return "\nsuper: mId: " + mId + " mParentId: " + mParentId;
 	}
 	
 }

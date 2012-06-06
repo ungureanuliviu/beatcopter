@@ -26,8 +26,11 @@ public class Convertor {
 	public static String toString(Object obj){			
 		if(obj == null)
 			return "this object is null";
+		String thisClass = obj.getClass().getSimpleName();
+		Class superClass = obj.getClass().getSuperclass();
 		
-		String data		= "";	
+		
+		String data		= "\n======================= " + thisClass + " ===========================";		
 		Class<?> c 		= obj.getClass();				
 		Field[] fields 	= c.getDeclaredFields();
 		int 	modifiers;		
@@ -46,7 +49,8 @@ public class Convertor {
 					else if(f.getType().equals(Double.class) || f.getType().equals(double.class))
 						data += "\n" + f.getName() + ": " + f.getDouble(obj);
 					else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
-						data += "\n" + f.getName() + ": " + f.getBoolean(obj);		
+						data += "\n" + f.getName() + ": " + f.getBoolean(obj);
+					else data += "\n" + f.getName() + ":" + Convertor.toString(f.get(obj), 5);
 				}
 				catch (IllegalArgumentException e) {
 					e.printStackTrace();
@@ -56,7 +60,69 @@ public class Convertor {
 				}		
 			}
 		}
+		data += "\nsuperclass:\n   " + superClass.toString();
+		data += "\n================================================================\n";
+		return data;
+	}	
+	
+	public static String toString(Object obj, int spaces){			
+		if(obj == null)
+			return "this object is null";
+		String thisClass = obj.getClass().getSimpleName();
+		Class superClass = obj.getClass().getSuperclass();
 		
+		int clsNameLength = thisClass.length();
+		String eqSign = "----------------------";
+		
+		String data = "";
+		String strSpaces = "";
+		for(int i = 0; i < spaces; i++){
+			strSpaces+= " ";
+		}
+		
+		strSpaces += "|";		
+		data = "\n" + strSpaces + eqSign + " " + thisClass + " " + eqSign;		
+		Class<?> c 		= obj.getClass();				
+		Field[] baseFields = obj.getClass().getDeclaredFields();
+		Field[] superFields = obj.getClass().getSuperclass().getDeclaredFields();
+		Field[] fields = new Field[baseFields.length + superFields.length];
+		
+		System.arraycopy(superFields, 0, fields, 0, superFields.length);
+		System.arraycopy(baseFields, 0, fields, superFields.length, baseFields.length);	
+		
+		int 	modifiers;		
+		
+		for(Field f : fields){
+			f.setAccessible(true);
+			modifiers = f.getModifiers();
+			if(!Modifier.isFinal(modifiers)){
+				try {													
+					if(f.getType().equals(String.class))
+						data += "\n" + strSpaces + f.getName() + ": " + ((String)f.get(obj));
+					else if(f.getType().equals(int.class) || f.getType().equals(Integer.class))
+						data += "\n" + strSpaces + f.getName() + ": " + f.getInt(obj);
+					else if(f.getType().equals(long.class) || f.getType().equals(Long.class))
+						data += "\n" + strSpaces + f.getName() + ": " + f.getLong(obj);
+					else if(f.getType().equals(Double.class) || f.getType().equals(double.class))
+						data += "\n" + strSpaces + f.getName() + ": " + f.getDouble(obj);
+					else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
+						data += "\n" + strSpaces + f.getName() + ": " + f.getBoolean(obj);
+					else data += "\n" + strSpaces + f.getName() + ":" + Convertor.toString(f.get(obj), spaces + 5);
+				}
+				catch (IllegalArgumentException e) {
+					e.printStackTrace();
+				}
+				catch (IllegalAccessException e) {
+					e.printStackTrace();
+				}		
+			}
+		}
+		data +=  "\n" + strSpaces + "superclass:\n" + strSpaces + "    " + superClass.toString();		
+		data += "\n" + strSpaces + eqSign;
+		for(int i = 0; i < clsNameLength + 2; i++){
+			data += "-";
+		}
+		data += eqSign;
 		return data;
 	}	
 	
