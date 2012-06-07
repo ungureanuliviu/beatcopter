@@ -158,7 +158,7 @@ public class DbManager {
 				else if(pField.getType().equals(Boolean.class) || pField.getType().equals(boolean.class))
 					sql = pField.getName() + " integer"; // this should boolean: TODO look at this problem when you read from DB
 				else
-					sql = pField.getName() + " text";
+					sql = pField.getName() + " integer";
 			}
 			catch (IllegalArgumentException e) {
 				e.printStackTrace();
@@ -203,7 +203,8 @@ public class DbManager {
 	}
 	
 	public long put(Object pItem, long pParentId){
-		Console.debug(TAG, "put()", Console.Liviu);
+		long now = Utils.now();
+		Console.debug(TAG, "put( " + pItem + ") \n" + pParentId, Console.Liviu);
 		
 		if(null == pItem){
 			return DBConstants.INVALID_ID;
@@ -242,6 +243,10 @@ public class DbManager {
 						else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
 							values.put(f.getName(), f.getBoolean(pItem));
 						else{
+							values.put(f.getName(), now + otherObjectsToStore.size());
+							Console.error(TAG, "here " + otherObjectsToStore.size() + ": " + (now + otherObjectsToStore.size()), Console.Liviu);
+							otherObjectsToStore.add(f.get(pItem));
+							/*
 							Type type = f.getGenericType();
 							if(type instanceof ParameterizedType){
 								ParameterizedType pt = (ParameterizedType) type;  
@@ -251,7 +256,8 @@ public class DbManager {
 					            }
 					        }else{
 					        	otherObjectsToStore.add(f.get(pItem));		
-							}
+							} 
+							*/
 						}						
 					} catch (IllegalArgumentException e) {
 						e.printStackTrace();
@@ -274,9 +280,18 @@ public class DbManager {
 				long pNewId = mDb.insertOrThrow(tableName, null, values);
 				if(-1 != pNewId){
 					closeDatabase();
-					for (Object obj: otherObjectsToStore) {
-						Console.debug(TAG, "put subitem: " + obj + " with parentId: " + pNewId, Console.Liviu);
-						put(obj, pNewId);
+					for (int i = 0; i < otherObjectsToStore.size(); i++) {
+						Console.debug(TAG, "put subitem: " + otherObjectsToStore.get(i) + " with parentId: " + pNewId, Console.Liviu);
+						if(!(otherObjectsToStore.get(i) instanceof String) && 
+						   !(otherObjectsToStore.get(i) instanceof Integer) && 
+						   !(otherObjectsToStore.get(i) instanceof Long) &&
+						   !(otherObjectsToStore.get(i) instanceof Double) &&
+						   !(otherObjectsToStore.get(i) instanceof Boolean)){
+							Console.error(TAG, "put a subitem with parent: " + (now + i), Console.Liviu);							
+						   put(otherObjectsToStore.get(i), now + i);	
+						}else{
+							put(otherObjectsToStore.get(i), pNewId);
+						}
 						
 						/*
 						 * Type type = f.getGenericType();
@@ -346,8 +361,7 @@ public class DbManager {
 		int modifier;
 		for(int i = 0; i < fields.length; i++){
 			modifier = fields[i].getModifiers();
-			if(!Modifier.isFinal(modifier)){
-				Console.debug(TAG, "added to projection: " + fields[i].getName(), Console.Liviu);
+			if(!Modifier.isFinal(modifier)){				
 				if("mLocalId".equals(fields[i].getName())){
 					prj.add(0, fields[i].getName());	
 				}else{
@@ -410,6 +424,7 @@ public class DbManager {
 					}				
 					
 					if(f.getName().equals("mId")){
+						Console.error(TAG, "mId: " + c.getLong(prjIndex), Console.Liviu);
 						((DBModel)tempObj).setId(c.getLong(prjIndex));
 					}else if(f.getName().equals("mParentId")){
 						((DBModel)tempObj).setParentId(c.getLong(prjIndex));
@@ -423,14 +438,11 @@ public class DbManager {
 						f.setDouble(tempObj, c.getDouble(prjIndex));
 					else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
 						f.setBoolean(tempObj, c.getInt(prjIndex) == 1 ? Boolean.TRUE : Boolean.FALSE);					
-					else{
-						Console.error(TAG, "get child object: ", Console.Liviu);
-						Console.error(TAG, "get child object: " + ((DBModel)tempObj).getId(), Console.Liviu);
-						f.set(tempObj, queryFirst(f.getType(), new String[]{"*"}, "mParentId=" + ((DBModel)tempObj).getId(), null, null, null, false));
+					else{						
+						Console.error(TAG, "get child object: " + c.getLong(prjIndex), Console.Liviu);
+						f.set(tempObj, queryFirst(f.getType(), new String[]{"*"}, "mParentId=" + c.getLong(prjIndex), null, null, null, false));
 					}
-				}
-				
-				Console.error(TAG, "get child object final: " + ((DBModel)tempObj).getId(), Console.Liviu);
+				}								
 				resultsList.add(tempObj);
 				c.moveToNext();
 			}
@@ -457,6 +469,8 @@ public class DbManager {
 	}
 	
 	public synchronized <T> Object queryFirst(T objectsKindClass, String[] projection, String selection, String groupBy, String having, String orderBy, boolean pShouldOpenDatabase){
+		Console.error(TAG, "queryFirst: " +objectsKindClass + " projection: " + projection + " selection: " + selection, Console.Liviu);
+		
 		T result = null;
 		Class objectsKind = (Class)objectsKindClass;
 		String[] localProjection = projection;
@@ -479,6 +493,7 @@ public class DbManager {
 		}
 		
 		if(null == c){
+			Console.debug(TAG, "cursor is null", Console.Liviu);
 			if(pShouldOpenDatabase){
 				closeDatabase();
 			}
@@ -486,6 +501,7 @@ public class DbManager {
 		}
 		
 		if(c.getCount() == 0){
+			Console.debug(TAG, "cursor is empty", Console.Liviu);
 			c.close();
 			if(pShouldOpenDatabase){
 				closeDatabase();
@@ -520,7 +536,11 @@ public class DbManager {
 				else if(f.getType().equals(Double.class) || f.getType().equals(double.class))
 					f.setDouble(tempObj, c.getDouble(prjIndex));
 				else if(f.getType().equals(Boolean.class) || f.getType().equals(boolean.class))
-					f.setBoolean(tempObj, c.getInt(prjIndex) == 1 ? Boolean.TRUE : Boolean.FALSE);																					
+					f.setBoolean(tempObj, c.getInt(prjIndex) == 1 ? Boolean.TRUE : Boolean.FALSE);			
+				else{					
+					Console.error(TAG, "get child where: " + "mParentId=" + c.getLong(prjIndex), Console.Liviu);
+					f.set(tempObj, queryFirst(f.getType(), new String[]{"*"}, "mParentId=" + c.getLong(prjIndex), null, null, null, false));
+				}
 			}
 			result = tempObj;
 		} catch (SecurityException e) {

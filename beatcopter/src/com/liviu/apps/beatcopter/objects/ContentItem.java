@@ -43,6 +43,15 @@ public class ContentItem extends DBModel{
 		mTest = new Test();
 	}
 	
+	public ContentItem(String p2) {
+		super();
+		long now = Utils.now();		
+		mRemoteId = Constants.INVALID_ID;		
+		mType = TYPE_UNKNOWN;		
+		mPath = p2;
+		mTest = new Test();
+	}	
+	
 	public long getRemoteId(){
 		return mRemoteId;
 	}

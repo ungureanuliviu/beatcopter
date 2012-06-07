@@ -32,8 +32,14 @@ public class Convertor {
 		
 		String data		= "\n======================= " + thisClass + " ===========================";		
 		Class<?> c 		= obj.getClass();				
-		Field[] fields 	= c.getDeclaredFields();
-		int 	modifiers;		
+		
+		Field[] baseFields = obj.getClass().getDeclaredFields();
+		Field[] superFields = obj.getClass().getSuperclass().getDeclaredFields();
+		Field[] fields = new Field[baseFields.length + superFields.length];
+		int modifiers;		
+		
+		System.arraycopy(superFields, 0, fields, 0, superFields.length);
+		System.arraycopy(baseFields, 0, fields, superFields.length, baseFields.length);							
 		
 		for(Field f : fields){
 			f.setAccessible(true);
@@ -88,9 +94,8 @@ public class Convertor {
 		Field[] fields = new Field[baseFields.length + superFields.length];
 		
 		System.arraycopy(superFields, 0, fields, 0, superFields.length);
-		System.arraycopy(baseFields, 0, fields, superFields.length, baseFields.length);	
-		
-		int 	modifiers;		
+		System.arraycopy(baseFields, 0, fields, superFields.length, baseFields.length);			
+		int modifiers;		
 		
 		for(Field f : fields){
 			f.setAccessible(true);

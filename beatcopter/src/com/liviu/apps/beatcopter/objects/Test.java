@@ -13,10 +13,14 @@ public class Test extends DBModel{
 	private String mTestField;
 	
 	public Test() {
-		super();
+		super();  
 		mTestField = "test " + Utils.now();
 	}
 	
+	public Test(String t1) {
+		mTestField = t1;
+	}
+
 	@Override
 	public String toString() {
 		return Convertor.toString(this);

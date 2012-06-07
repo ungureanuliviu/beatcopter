@@ -24,8 +24,11 @@ public class HomeActivity extends Activity {
         
         dbMan.registerTables(new Class<?>[]{Beat.class, Test.class, ContentItem.class});        
         
-        Beat beat = new Beat();
+        Beat beat = new Beat("test3", "img4", "img32", "tst3");
+        Beat beat2 = new Beat("test4", "img4", "img42", "tst4");
+        
         Console.debug(TAG, "newId: " + dbMan.put(beat, -1), Console.Liviu);
+        Console.debug(TAG, "newId: " + dbMan.put(beat2, -1), Console.Liviu);
         ArrayList<Beat> beats = (ArrayList<Beat>) dbMan.query(Beat.class, new String[]{"*"}, null, null, null, null);        
         Console.debug(TAG, "results: " + beats , Console.Liviu);        
     }

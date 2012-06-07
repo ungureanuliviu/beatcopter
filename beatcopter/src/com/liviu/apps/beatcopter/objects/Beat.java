@@ -31,22 +31,32 @@ public class Beat extends DBModel{
 	@DbField
 	private long mUserId;
 	
-	@DbField(canBeNull=true, defaultValue="null")
+	@DbField
 	private ContentItem mImage;
+	
+	@DbField
+	private ContentItem mImage2;	
 	
 	@DbField(canBeNull=true, defaultValue="null")
 	private Test mTest;
 	
-	@DbField(canBeNull=true, defaultValue="null")
-	private ArrayList<ContentItem> mItems;
-	
 	public Beat(){		
 		super();
 		mRemoteId = 33;
-		mTitle = "Beat " + Utils.now();
+		mTitle = "Beat";
 		mImage = new ContentItem();
+		mImage2 = new ContentItem();
 		mUserId = 1;
 		mTest = new Test();				
+	}
+	
+	public Beat(String pTitle, String p1, String p2, String t1){
+		mRemoteId = 33;
+		mTitle = pTitle;
+		mImage = new ContentItem(p1);
+		mImage2 = new ContentItem(p2);
+		mUserId = 1;
+		mTest = new Test(t1);		
 	}
 	
 	@Override
